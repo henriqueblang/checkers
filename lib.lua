@@ -28,10 +28,14 @@ function calculateViablePlays(x, y)
         if nextRow < 1 or nextRow > 8 then return end
 
         for i = 1, 2 do
-            local adjSquare = board[nextRow][nextColumns[i]]
+            local nextColumn = nextColumns[i]
 
-            if not adjSquare then
-                table.insert(viablePlays[piece.id], {x = nextColumns[i], y = nextRow})
+            if nextColumn >= 1 and nextColumn <= 8 then
+                local adjSquare = board[nextRow][nextColumn]
+
+                if not adjSquare then
+                    table.insert(viablePlays[piece.id], {x = nextColumn, y = nextRow})
+                end
             end
         end
     end

@@ -3,8 +3,8 @@ require("lib")
 board = {}
 
 turn = PLAYER_ONE
-viablePlays = {}
 
+viablePlays = {}
 local selected = nil
 
 local pawnFile = nil
@@ -72,7 +72,8 @@ function love.draw()
     end
 
     if selected then
-        local plays = viablePlays[selected.id]
+        local piece = board[selected.y][selected.x]
+        local plays = viablePlays[piece.id]
 
         if not plays or #plays == 0 then return end
 
@@ -106,7 +107,34 @@ function love.mousereleased(x, y, button, istouch)
             calculateViablePlays(x, y)
         end
 
-        selected = piece
+        selected = {x = x, y = y}
+    else
+        if square then return end
+
+        local piece = board[selected.y][selected.x]
+        local plays = viablePlays[piece.id]
+        local selectedPlay = nil
+
+        for i = 1, #plays do
+            local play = plays[i]
+
+            if play.x == x and play.y == y then
+                selectedPlay = play
+
+                break
+            end
+        end
+
+        if not selectedPlay then return end
+
+        board[y][x] = piece
+        board[selected.y][selected.x] = nil
+        
+        turn = turn == PLAYER_ONE and PLAYER_TWO or PLAYER_ONE
+
+        viablePlays = {} 
+        selected = nil
+
     end
 
 
