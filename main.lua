@@ -96,6 +96,13 @@ function love.draw()
 
 end
 
+function love.update(dt)
+    if #pieces[PLAYER_ONE] == 0 or #pieces[PLAYER_TWO] == 0 then
+        print("Player "..(#pieces[PLAYER_ONE] > 0 and "one" or "two").." wins!")
+        love.event.quit()
+    end
+end
+
 function love.mousereleased(x, y, button, istouch)
     if button ~= RIGHT_CLICK then return end
 
