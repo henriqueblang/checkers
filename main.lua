@@ -2,61 +2,66 @@ require("lib")
 
 board = {}
 
+pieces = {
+    [PLAYER_ONE] = {},
+    [PLAYER_TWO] = {},
+}
+
 turn = PLAYER_ONE
 
-viablePlays = {}
+viableMoves = {}
 local selected = nil
 
-local pawnFile = nil
+local checkerFile = nil
 local boardFile = nil
 local pieceIcons = {{}, {}}
 
 function love.load()
     boardFile = love.graphics.newImage("board.png")
-    pawnFile = love.graphics.newImage("pawns.png")
+    checkerFile = love.graphics.newImage("checkers.png")
 
-    pieceIcons[PLAYER_ONE][PAWN] = love.graphics.newQuad(4, 4, PAWN_SIZE, PAWN_SIZE, pawnFile:getDimensions())
-    pieceIcons[PLAYER_TWO][PAWN] = love.graphics.newQuad(314, 4, PAWN_SIZE, PAWN_SIZE, pawnFile:getDimensions())
+    pieceIcons[PLAYER_ONE][CHECKER] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
+    pieceIcons[PLAYER_TWO][CHECKER] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
 
     for i = 1, 8 do
         board[i] = {}
     end
 
-    local wPawnCount = 1
-    local bPawnCount = 1
+    local wCheckerCount = 1
+    local bCheckerCount = 1
 
     -- Setup board
     for i = 1, 8, 2 do
-        board[1][i] = { owner = PLAYER_ONE, id = wPawnCount, class = PAWN }
-        wPawnCount = wPawnCount + 1
+        board[1][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        wCheckerCount = wCheckerCount + 1
 
-        board[3][i] = { owner = PLAYER_ONE, id = wPawnCount, class = PAWN }
-        wPawnCount = wPawnCount + 1
+        board[3][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        wCheckerCount = wCheckerCount + 1
 
-        board[7][i] =  { owner = PLAYER_TWO, id = bPawnCount, class = PAWN }
-        bPawnCount = bPawnCount + 1
+        board[7][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        bCheckerCount = bCheckerCount + 1
     end
 
     for i = 2, 8, 2 do
-        board[2][i] = { owner = PLAYER_ONE, id = wPawnCount, class = PAWN }
-        wPawnCount = wPawnCount + 1
+        board[2][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        wCheckerCount = wCheckerCount + 1
 
-        board[6][i] =  { owner = PLAYER_TWO, id = bPawnCount, class = PAWN }
-        bPawnCount = bPawnCount + 1
+        board[6][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        bCheckerCount = bCheckerCount + 1
 
-        board[8][i] =  { owner = PLAYER_TWO, id = bPawnCount, class = PAWN }
-        bPawnCount = bPawnCount + 1
+        board[8][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        bCheckerCount = bCheckerCount + 1
+    end
+
+    for i = 1, 12 do
+        table.insert(pieces[PLAYER_ONE], i)
+        table.insert(pieces[PLAYER_TWO], i)
     end
 end
 
 function love.draw()
     -- Draw board
     love.graphics.draw(boardFile, 0, 0)
-
-    --[[r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(0, 0, 255, 0.3)
-    love.graphics.rectangle("fill", 0, 96, SQUARE_SIZE, SQUARE_SIZE)
-    love.graphics.setColor(r, g, b, a)]]
     
     -- Draw pieces
     for i = 0, 7 do
@@ -66,22 +71,24 @@ function love.draw()
             if piece then
                 local icon = pieceIcons[piece.owner][piece.class]
 
-                love.graphics.draw(pawnFile, icon, (j * SQUARE_SIZE) + PAWN_DISPLAY_PAD, (i * SQUARE_SIZE) + PAWN_DISPLAY_PAD, 0, PAWN_SCALE, PAWN_SCALE)
+                love.graphics.draw(checkerFile, icon, (j * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, (i * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, 0, CHECKER_SCALE, CHECKER_SCALE)
             end
         end
     end
 
     if selected then
         local piece = board[selected.y][selected.x]
-        local plays = viablePlays[piece.id]
+        local moves = viableMoves[piece.id]
 
-        if not plays or #plays == 0 then return end
+        if not moves then return end
+
+        local cmpTbl = #moves.capture > 0 and moves.capture or moves.non_capture
 
         r, g, b, a = love.graphics.getColor()
         love.graphics.setColor(0, 0, 255, 0.3)
 
-        for i = 1, #plays do
-            love.graphics.rectangle("fill", (plays[i].x - 1) * SQUARE_SIZE, (plays[i].y - 1) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+        for i = 1, #cmpTbl do
+            love.graphics.rectangle("fill", (cmpTbl[i].x - 1) * SQUARE_SIZE, (cmpTbl[i].y - 1) * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
         end
 
         love.graphics.setColor(r, g, b, a)
@@ -101,25 +108,25 @@ function love.mousereleased(x, y, button, istouch)
     if not selected or (square and square.owner == turn) then
         local piece = square
 
-        if piece.owner ~= turn then return end
+        if not piece or piece.owner ~= turn then return end
 
-        if not viablePlays[piece.id] then
-            calculateViablePlays(x, y)
+        if not viableMoves[piece.id] then
+            calculateMoves(x, y)
         end
 
         selected = {x = x, y = y}
-    else
-        if square then return end
-
+    elseif not square then
         local piece = board[selected.y][selected.x]
-        local plays = viablePlays[piece.id]
+        local moves = viableMoves[piece.id]
         local selectedPlay = nil
 
-        for i = 1, #plays do
-            local play = plays[i]
+        local cmpTbl = #moves.capture > 0 and moves.capture or moves.non_capture
 
-            if play.x == x and play.y == y then
-                selectedPlay = play
+        for i = 1, #cmpTbl do
+            local move = cmpTbl[i]
+
+            if move.x == x and move.y == y then
+                selectedPlay = move
 
                 break
             end
@@ -127,15 +134,22 @@ function love.mousereleased(x, y, button, istouch)
 
         if not selectedPlay then return end
 
+        viableMoves = {}
+
         board[y][x] = piece
         board[selected.y][selected.x] = nil
+
+        if selectedPlay.piece then
+            board[selectedPlay.piece.y][selectedPlay.piece.x] = nil
+
+            calculateMoves(x, y)
+        end
         
-        turn = turn == PLAYER_ONE and PLAYER_TWO or PLAYER_ONE
+        local pieceMoves = viableMoves[piece.id]
+        if pieceMoves and #pieceMoves.capture > 0 then return end
 
-        viablePlays = {} 
+        passTurn()
         selected = nil
-
     end
-
 
 end
