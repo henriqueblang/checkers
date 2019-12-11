@@ -7,14 +7,16 @@ pieces = {
     [PLAYER_TWO] = {},
 }
 
-turn = PLAYER_ONE
+turn = nil
 
 viableMoves = {}
+
 local selected = nil
 
 local checkerFile = nil
 local boardFile = nil
 local pieceIcons = {{}, {}}
+
 
 function love.load()
     boardFile = love.graphics.newImage("board.png")
@@ -32,31 +34,40 @@ function love.load()
 
     -- Setup board
     for i = 1, 8, 2 do
-        board[1][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        board[1][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 1 }
         wCheckerCount = wCheckerCount + 1
 
-        board[3][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        table.insert(pieces[PLAYER_ONE], board[1][i])
+
+        board[3][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 3 }
         wCheckerCount = wCheckerCount + 1
 
-        board[7][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        table.insert(pieces[PLAYER_ONE], board[3][i])
+
+        board[7][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 7 }
         bCheckerCount = bCheckerCount + 1
+
+        table.insert(pieces[PLAYER_TWO], board[7][i])
     end
 
     for i = 2, 8, 2 do
-        board[2][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER }
+        board[2][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 2 }
         wCheckerCount = wCheckerCount + 1
 
-        board[6][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        table.insert(pieces[PLAYER_ONE], board[2][i])
+
+        board[6][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 6 }
         bCheckerCount = bCheckerCount + 1
 
-        board[8][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER }
+        table.insert(pieces[PLAYER_TWO], board[6][i])
+
+        board[8][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 8 }
         bCheckerCount = bCheckerCount + 1
+
+        table.insert(pieces[PLAYER_TWO], board[8][i])
     end
 
-    for i = 1, 12 do
-        table.insert(pieces[PLAYER_ONE], i)
-        table.insert(pieces[PLAYER_TWO], i)
-    end
+    passTurn()
 end
 
 function love.draw()
@@ -78,6 +89,9 @@ function love.draw()
 
     if selected then
         local piece = board[selected.y][selected.x]
+
+        if not piece then return end 
+
         local moves = viableMoves[piece.id]
 
         if not moves then return end
@@ -117,10 +131,6 @@ function love.mousereleased(x, y, button, istouch)
 
         if not piece or piece.owner ~= turn then return end
 
-        if not viableMoves[piece.id] then
-            calculateMoves(x, y)
-        end
-
         selected = {x = x, y = y}
     elseif not square then
         local piece = board[selected.y][selected.x]
@@ -141,22 +151,37 @@ function love.mousereleased(x, y, button, istouch)
 
         if not selectedPlay then return end
 
-        viableMoves = {}
-
+        piece.x = x
+        piece.y = y
         board[y][x] = piece
+
         board[selected.y][selected.x] = nil
 
-        if selectedPlay.piece then
-            board[selectedPlay.piece.y][selectedPlay.piece.x] = nil
-
-            calculateMoves(x, y)
+        local ePiece = selectedPlay.piece
+        if ePiece then
+            capturePiece(ePiece)
+            calculateMoves(piece)
         end
         
         local pieceMoves = viableMoves[piece.id]
-        if pieceMoves and #pieceMoves.capture > 0 then return end
+        if pieceMoves and #pieceMoves.capture > 0 then
+            local playerPieces = pieces[turn]
+
+            for i = 1, #playerPieces do
+                local remainingPieceId = playerPieces[i].id
+    
+                if remainingPieceId ~= piece.id then
+                    viableMoves[remainingPieceId] = {capture = {}, non_capture = {}}
+                end
+            end
+            
+            return 
+        end
+
+        selected = nil
+        viableMoves = {}
 
         passTurn()
-        selected = nil
     end
 
 end

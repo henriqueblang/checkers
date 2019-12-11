@@ -13,72 +13,89 @@ PLAYER_TWO = 2
 KING = 1
 CHECKER = 2
 
--- Calculate viable moves (capture or not) for piece at position x,y
-function calculateMoves(x, y)
-    local piece = board[y][x]
+
+function calculateMoves(piece)
+    x, y = piece.x, piece.y
 
     local nextRows = nil
     local nextColumns = nil
+    local canCapture = false
 
     viableMoves[piece.id] = {capture = {}, non_capture = {}}
+    
+    local diagonals = getDiagonals(x, y)
+    for player, positions in pairs(diagonals) do
+        for i = 1, #positions do
+            local position = positions[i]
 
-    if piece.class == CHECKER then
-        local diagonals = getDiagonals(x, y)
+            if position.x >= 1 and position.x <= 8 and position.y >= 1 and position.y <= 8 then
+                local adjSquare = board[position.y][position.x]
 
-        for player, positions in pairs(diagonals) do
-            for i = 1, #positions do
-                local position = positions[i]
+                if not adjSquare then
+                    if player == turn then
+                        table.insert(viableMoves[piece.id].non_capture, position)
+                    end
+                elseif adjSquare.owner ~= turn then
+                    local captureDiagonals = getDiagonals(position.x, position.y)
+                    local jumpPosition = {x = captureDiagonals[player][i].x, y = captureDiagonals[player][i].y}
 
-                if position.x >= 1 and position.x <= 8 and position.y >= 1 and position.y <= 8 then
-                    local adjSquare = board[position.y][position.x]
+                    if jumpPosition.x >= 1 and jumpPosition.x <= 8 and jumpPosition.y >= 1 and jumpPosition.y <= 8 then 
+                        if not board[jumpPosition.y][jumpPosition.x] then
+                            canCapture = true
 
-                    if not adjSquare then
-                        if player == turn then
-                            table.insert(viableMoves[piece.id].non_capture, position)
-                        end
-                    elseif adjSquare.owner ~= turn then
-                        local captureDiagonals = getDiagonals(position.x, position.y)
-                        local jumpPosition = {x = captureDiagonals[player][i].x, y = captureDiagonals[player][i].y}
-
-                        if jumpPosition.x >= 1 and jumpPosition.x <= 8 and jumpPosition.y >= 1 and jumpPosition.y <= 8 then 
-                            if not board[jumpPosition.y][jumpPosition.x] then
-                                jumpPosition.piece = {x = position.x, y = position.y}
-
-                                table.insert(viableMoves[piece.id].capture, jumpPosition)
-                            end
+                            jumpPosition.piece = adjSquare
+                            table.insert(viableMoves[piece.id].capture, jumpPosition)
                         end
                     end
                 end
             end
         end
-
-        if #viableMoves[piece.id].capture > 0 then
-            local playerPieces = pieces[turn]
-
-            for i = 1, #playerPieces do
-                local remainingPiece = playerPieces[i]
-
-                if remainingPiece ~= piece.id then
-                    viableMoves[remainingPiece] = {}
-                    viableMoves[remainingPiece].capture = {}
-                    viableMoves[remainingPiece].non_capture = {}
-                end
-            end
-        end
-
     end
 
+    return canCapture
 end
 
--- Calculate enemy pieces that can capture at position x,y
-function calculateCapture(x, y)
-    local piece = board[y][x]
+function capturePiece(piece)
+    x, y = piece.x, piece.y
 
+    board[y][x] = nil
+
+    local playerPieces = pieces[piece.owner]
+    for i = 1, #playerPieces do
+        if playerPieces[i].id == piece.id then
+            table.remove(playerPieces, i)
+
+            break
+        end
+    end
 
 end
 
 function passTurn()
     turn = turn == PLAYER_ONE and PLAYER_TWO or PLAYER_ONE
+
+    local capture = false
+    local playerPieces = pieces[turn]
+
+    for i = 1, #playerPieces do
+        local piece = playerPieces[i]
+
+        if calculateMoves(piece) then
+            if not capture then
+                capture = true
+
+                for k = (i - 1), 1, -1 do
+                    local previousPiece = playerPieces[k]
+
+                    viableMoves[previousPiece.id].non_capture = {}
+                end
+            end
+        elseif capture then
+            viableMoves[piece.id].non_capture = {}
+        end
+        
+    end
+    
 end
 
 function getDiagonals(x, y)
@@ -93,6 +110,16 @@ function getDiagonals(x, y)
             {x = x + 1, y = y - 1}
         }
     }
+end
+
+function table.removeElement(tbl, element)
+    for index, v in pairs(tbl) do
+        if v == element then
+            tbl[index] = nil
+
+            break
+        end
+    end
 end
 
 -- Get x, y coordinates in hypothetical board based on window coordinates
