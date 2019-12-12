@@ -21,7 +21,7 @@ function calculateMoves(piece)
     local nextColumns = nil
     local canCapture = false
 
-    viableMoves[piece.id] = {capture = {}, non_capture = {}}
+    validMoves[piece.id] = {capture = {}, non_capture = {}}
     
     local diagonals = getDiagonals(x, y)
     for player, positions in pairs(diagonals) do
@@ -33,7 +33,7 @@ function calculateMoves(piece)
 
                 if not adjSquare then
                     if player == turn then
-                        table.insert(viableMoves[piece.id].non_capture, position)
+                        table.insert(validMoves[piece.id].non_capture, position)
                     end
                 elseif adjSquare.owner ~= turn then
                     local captureDiagonals = getDiagonals(position.x, position.y)
@@ -44,7 +44,7 @@ function calculateMoves(piece)
                             canCapture = true
 
                             jumpPosition.piece = adjSquare
-                            table.insert(viableMoves[piece.id].capture, jumpPosition)
+                            table.insert(validMoves[piece.id].capture, jumpPosition)
                         end
                     end
                 end
@@ -75,8 +75,9 @@ function passTurn()
     turn = turn == PLAYER_ONE and PLAYER_TWO or PLAYER_ONE
 
     local capture = false
-    local playerPieces = pieces[turn]
+    local validMovesCount = 0
 
+    local playerPieces = pieces[turn]
     for i = 1, #playerPieces do
         local piece = playerPieces[i]
 
@@ -87,13 +88,19 @@ function passTurn()
                 for k = (i - 1), 1, -1 do
                     local previousPiece = playerPieces[k]
 
-                    viableMoves[previousPiece.id].non_capture = {}
+                    validMoves[previousPiece.id].non_capture = {}
                 end
             end
         elseif capture then
-            viableMoves[piece.id].non_capture = {}
+            validMoves[piece.id].non_capture = {}
         end
+
+        validMovesCount = validMovesCount + #validMoves[piece.id].non_capture + #validMoves[piece.id].capture
         
+    end
+
+    if validMovesCount == 0 then
+        pieces[turn] = {}
     end
     
 end

@@ -9,7 +9,7 @@ pieces = {
 
 turn = nil
 
-viableMoves = {}
+validMoves = {}
 
 local selected = nil
 
@@ -92,7 +92,7 @@ function love.draw()
 
         if not piece then return end 
 
-        local moves = viableMoves[piece.id]
+        local moves = validMoves[piece.id]
 
         if not moves then return end
 
@@ -134,7 +134,7 @@ function love.mousereleased(x, y, button, istouch)
         selected = {x = x, y = y}
     elseif not square then
         local piece = board[selected.y][selected.x]
-        local moves = viableMoves[piece.id]
+        local moves = validMoves[piece.id]
         local selectedPlay = nil
 
         local cmpTbl = #moves.capture > 0 and moves.capture or moves.non_capture
@@ -163,7 +163,7 @@ function love.mousereleased(x, y, button, istouch)
             calculateMoves(piece)
         end
         
-        local pieceMoves = viableMoves[piece.id]
+        local pieceMoves = validMoves[piece.id]
         if pieceMoves and #pieceMoves.capture > 0 then
             local playerPieces = pieces[turn]
 
@@ -171,7 +171,7 @@ function love.mousereleased(x, y, button, istouch)
                 local remainingPieceId = playerPieces[i].id
     
                 if remainingPieceId ~= piece.id then
-                    viableMoves[remainingPieceId] = {capture = {}, non_capture = {}}
+                    validMoves[remainingPieceId] = {capture = {}, non_capture = {}}
                 end
             end
             
@@ -179,7 +179,7 @@ function love.mousereleased(x, y, button, istouch)
         end
 
         selected = nil
-        viableMoves = {}
+        validMoves = {}
 
         passTurn()
     end
