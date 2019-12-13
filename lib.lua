@@ -10,8 +10,8 @@ CHECKER_DISPLAY_PAD = 10
 PLAYER_ONE = 1
 PLAYER_TWO = 2
 
-KING = 1
-CHECKER = 2
+MAN = 1
+KING = 2
 
 
 function calculateMoves(piece)
@@ -25,6 +25,8 @@ function calculateMoves(piece)
     
     local diagonals = getDiagonals(x, y)
     for player, positions in pairs(diagonals) do
+        if piece.class == MAN and player ~= turn then goto next end 
+
         for i = 1, #positions do
             local position = positions[i]
 
@@ -32,9 +34,7 @@ function calculateMoves(piece)
                 local adjSquare = board[position.y][position.x]
 
                 if not adjSquare then
-                    if player == turn then
-                        table.insert(validMoves[piece.id].non_capture, position)
-                    end
+                    table.insert(validMoves[piece.id].non_capture, position)
                 elseif adjSquare.owner ~= turn then
                     local captureDiagonals = getDiagonals(position.x, position.y)
                     local jumpPosition = {x = captureDiagonals[player][i].x, y = captureDiagonals[player][i].y}
@@ -50,6 +50,8 @@ function calculateMoves(piece)
                 end
             end
         end
+
+        ::next::
     end
 
     return canCapture

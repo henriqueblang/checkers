@@ -22,8 +22,8 @@ function love.load()
     boardFile = love.graphics.newImage("board.png")
     checkerFile = love.graphics.newImage("checkers.png")
 
-    pieceIcons[PLAYER_ONE][CHECKER] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
-    pieceIcons[PLAYER_TWO][CHECKER] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
+    pieceIcons[PLAYER_ONE][MAN] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
+    pieceIcons[PLAYER_TWO][MAN] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
 
     for i = 1, 8 do
         board[i] = {}
@@ -34,34 +34,34 @@ function love.load()
 
     -- Setup board
     for i = 1, 8, 2 do
-        board[1][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 1 }
+        board[1][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = MAN, x = i, y = 1 }
         wCheckerCount = wCheckerCount + 1
 
         table.insert(pieces[PLAYER_ONE], board[1][i])
 
-        board[3][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 3 }
+        board[3][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = MAN, x = i, y = 3 }
         wCheckerCount = wCheckerCount + 1
 
         table.insert(pieces[PLAYER_ONE], board[3][i])
 
-        board[7][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 7 }
+        board[7][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = MAN, x = i, y = 7 }
         bCheckerCount = bCheckerCount + 1
 
         table.insert(pieces[PLAYER_TWO], board[7][i])
     end
 
     for i = 2, 8, 2 do
-        board[2][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = CHECKER, x = i, y = 2 }
+        board[2][i] = { owner = PLAYER_ONE, id = wCheckerCount, class = MAN, x = i, y = 2 }
         wCheckerCount = wCheckerCount + 1
 
         table.insert(pieces[PLAYER_ONE], board[2][i])
 
-        board[6][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 6 }
+        board[6][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = MAN, x = i, y = 6 }
         bCheckerCount = bCheckerCount + 1
 
         table.insert(pieces[PLAYER_TWO], board[6][i])
 
-        board[8][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = CHECKER, x = i, y = 8 }
+        board[8][i] =  { owner = PLAYER_TWO, id = bCheckerCount, class = MAN, x = i, y = 8 }
         bCheckerCount = bCheckerCount + 1
 
         table.insert(pieces[PLAYER_TWO], board[8][i])
@@ -118,7 +118,7 @@ function love.update(dt)
 end
 
 function love.mousereleased(x, y, button, istouch)
-    if button ~= RIGHT_CLICK then return end
+    if button ~= LEFT_CLICK and button ~= RIGHT_CLICK then return end
 
     x, y = getEquivalentPosition(x, y)
 
@@ -134,6 +134,11 @@ function love.mousereleased(x, y, button, istouch)
         selected = {x = x, y = y}
     elseif not square then
         local piece = board[selected.y][selected.x]
+
+        -- Sometimes there is a crash here
+        -- Check the reason
+        if not piece then return end
+
         local moves = validMoves[piece.id]
         local selectedPlay = nil
 
