@@ -9,6 +9,8 @@ pieces = {
 
 turn = nil
 
+drawTurns = 0
+
 validMoves = {}
 
 local selected = nil
@@ -136,8 +138,7 @@ end
 
 function love.update(dt)
     if #pieces[PLAYER_ONE] == 0 or #pieces[PLAYER_TWO] == 0 then
-        print("Player "..(#pieces[PLAYER_ONE] > 0 and "one" or "two").." wins!")
-        love.event.quit()
+        finishGame(#pieces[PLAYER_ONE] > 0 and PLAYER_ONE or PLAYER_TWO)
     end
 end
 
@@ -180,6 +181,8 @@ function love.mousereleased(x, y, button, istouch)
 
         if not selectedPlay then return end
 
+        drawTurns = drawTurns + 1
+
         piece.x = x
         piece.y = y
         board[y][x] = piece
@@ -188,12 +191,16 @@ function love.mousereleased(x, y, button, istouch)
 
         local ePiece = selectedPlay.piece
         if ePiece then
+            drawTurns = 0
+
             capturePiece(ePiece)
             calculateMoves(piece)
         end
 
         local crowned = false
         if piece.class == MAN and ((turn == PLAYER_ONE and y == 8) or (turn == PLAYER_TWO and y == 1)) then
+            drawTurns = 0
+
             crowned = true
 
             piece.class = KING

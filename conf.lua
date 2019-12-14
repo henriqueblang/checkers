@@ -4,7 +4,6 @@
 
 -- TODO
 --      draw when x turns pass without a BATTLE or without crowning
--- remain piece captured until turn ends (and not allow it be captured again)
 
 function love.conf(t)
     t.window.title = "Checkers"

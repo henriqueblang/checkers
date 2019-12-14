@@ -13,6 +13,8 @@ PLAYER_TWO = 2
 MAN = 1
 KING = 2
 
+DRAW_TURNS = 50
+
 local capturedPieces = {}
 
 
@@ -21,7 +23,8 @@ function calculateMoves(piece)
 
     local nextRows = nil
     local nextColumns = nil
-    local canCapture = false
+
+    local capture = false
 
     validMoves[piece.id] = {capture = {}, non_capture = {}}
     
@@ -43,7 +46,7 @@ function calculateMoves(piece)
 
                     if jumpPosition.x >= 1 and jumpPosition.x <= 8 and jumpPosition.y >= 1 and jumpPosition.y <= 8 then 
                         if not board[jumpPosition.y][jumpPosition.x] then
-                            canCapture = true
+                            capture = true
 
                             jumpPosition.piece = adjSquare
                             table.insert(validMoves[piece.id].capture, jumpPosition)
@@ -56,7 +59,7 @@ function calculateMoves(piece)
         ::next::
     end
 
-    return canCapture
+    return capture
 end
 
 function capturePiece(piece)
@@ -114,7 +117,22 @@ function passTurn()
     if validMovesCount == 0 then
         pieces[turn] = {}
     end
+
+    if drawTurns == DRAW_TURNS then
+        finishGame()
+    end
     
+end
+
+function finishGame(winner)
+    local message = "Draw!"
+
+    if winner then
+        message = "Player "..(winner == PLAYER_ONE and "one" or "two").." wins!"
+    end
+
+    print(message)
+    love.event.quit()
 end
 
 function getDiagonals(x, y)
