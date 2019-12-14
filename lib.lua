@@ -149,16 +149,6 @@ function getDiagonals(x, y)
     }
 end
 
-function table.removeElement(tbl, element)
-    for index, v in pairs(tbl) do
-        if v == element then
-            tbl[index] = nil
-
-            break
-        end
-    end
-end
-
 -- Get x, y coordinates in hypothetical board based on window coordinates
 function getEquivalentPosition(x, y)
     return math.ceil(x / SQUARE_SIZE), math.ceil(y / SQUARE_SIZE)

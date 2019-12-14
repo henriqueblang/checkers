@@ -160,8 +160,6 @@ function love.mousereleased(x, y, button, istouch)
     elseif not square then
         local piece = board[selected.y][selected.x]
 
-        -- Sometimes there is a crash here
-        -- Check the reason
         if not piece then return end
 
         local moves = validMoves[piece.id]
