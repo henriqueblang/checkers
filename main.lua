@@ -13,17 +13,28 @@ validMoves = {}
 
 local selected = nil
 
-local checkerFile = nil
+local manFile = nil
+local kingFile = nil
 local boardFile = nil
+
+local iconFile = {}
 local pieceIcons = {{}, {}}
 
 
 function love.load()
     boardFile = love.graphics.newImage("board.png")
-    checkerFile = love.graphics.newImage("checkers.png")
 
-    pieceIcons[PLAYER_ONE][MAN] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
-    pieceIcons[PLAYER_TWO][MAN] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, checkerFile:getDimensions())
+    manFile = love.graphics.newImage("men.png")
+    kingFile = love.graphics.newImage("kings.png")
+
+    iconFile[MAN] = manFile
+    iconFile[KING] = kingFile
+
+    pieceIcons[PLAYER_ONE][MAN] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, manFile:getDimensions())
+    pieceIcons[PLAYER_TWO][MAN] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, manFile:getDimensions())
+
+    pieceIcons[PLAYER_ONE][KING] = love.graphics.newQuad(4, 4, CHECKER_SIZE, CHECKER_SIZE, kingFile:getDimensions())
+    pieceIcons[PLAYER_TWO][KING] = love.graphics.newQuad(314, 4, CHECKER_SIZE, CHECKER_SIZE, kingFile:getDimensions())
 
     for i = 1, 8 do
         board[i] = {}
@@ -82,7 +93,7 @@ function love.draw()
             if piece then
                 local icon = pieceIcons[piece.owner][piece.class]
 
-                love.graphics.draw(checkerFile, icon, (j * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, (i * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, 0, CHECKER_SCALE, CHECKER_SCALE)
+                love.graphics.draw(iconFile[piece.class], icon, (j * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, (i * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, 0, CHECKER_SCALE, CHECKER_SCALE)
             end
         end
     end
@@ -167,9 +178,16 @@ function love.mousereleased(x, y, button, istouch)
             capturePiece(ePiece)
             calculateMoves(piece)
         end
+
+        local crowned = false
+        if piece.class == MAN and ((turn == PLAYER_ONE and y == 8) or (turn == PLAYER_TWO and y == 1)) then
+            crowned = true
+
+            piece.class = KING
+        end
         
         local pieceMoves = validMoves[piece.id]
-        if pieceMoves and #pieceMoves.capture > 0 then
+        if pieceMoves and #pieceMoves.capture > 0 and not crowned then
             local playerPieces = pieces[turn]
 
             for i = 1, #playerPieces do
