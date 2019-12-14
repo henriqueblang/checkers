@@ -2,7 +2,7 @@
 -- https://en.wikipedia.org/wiki/English_draughts
 -- https://boardgames.stackexchange.com/questions/7406/what-happens-when-a-piece-is-kinged-in-checkers
 
--- TODO king
+-- TODO
 --      draw when x turns pass without a BATTLE or without crowning
 -- remain piece captured until turn ends (and not allow it be captured again)
 

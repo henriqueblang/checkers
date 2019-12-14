@@ -82,6 +82,8 @@ function love.load()
 end
 
 function love.draw()
+    local r, g, b, a = nil
+
     -- Draw board
     love.graphics.draw(boardFile, 0, 0)
     
@@ -93,7 +95,17 @@ function love.draw()
             if piece then
                 local icon = pieceIcons[piece.owner][piece.class]
 
+                if piece.captured then
+                    r, g, b, a = love.graphics.getColor()
+
+                    love.graphics.setColor(255, 255, 255, 0.5)
+                end
+
                 love.graphics.draw(iconFile[piece.class], icon, (j * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, (i * SQUARE_SIZE) + CHECKER_DISPLAY_PAD, 0, CHECKER_SCALE, CHECKER_SCALE)
+
+                if r and g and b and a then
+                    love.graphics.setColor(r, g, b, a)
+                end
             end
         end
     end
@@ -110,6 +122,7 @@ function love.draw()
         local cmpTbl = #moves.capture > 0 and moves.capture or moves.non_capture
 
         r, g, b, a = love.graphics.getColor()
+
         love.graphics.setColor(0, 0, 255, 0.3)
 
         for i = 1, #cmpTbl do

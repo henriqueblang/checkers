@@ -13,6 +13,8 @@ PLAYER_TWO = 2
 MAN = 1
 KING = 2
 
+local capturedPieces = {}
+
 
 function calculateMoves(piece)
     x, y = piece.x, piece.y
@@ -35,7 +37,7 @@ function calculateMoves(piece)
 
                 if not adjSquare then
                     table.insert(validMoves[piece.id].non_capture, position)
-                elseif adjSquare.owner ~= turn then
+                elseif adjSquare.owner ~= turn and not adjSquare.captured then
                     local captureDiagonals = getDiagonals(position.x, position.y)
                     local jumpPosition = {x = captureDiagonals[player][i].x, y = captureDiagonals[player][i].y}
 
@@ -58,9 +60,9 @@ function calculateMoves(piece)
 end
 
 function capturePiece(piece)
-    x, y = piece.x, piece.y
+    table.insert(capturedPieces, piece)
 
-    board[y][x] = nil
+    piece.captured = true
 
     local playerPieces = pieces[piece.owner]
     for i = 1, #playerPieces do
@@ -75,6 +77,14 @@ end
 
 function passTurn()
     turn = turn == PLAYER_ONE and PLAYER_TWO or PLAYER_ONE
+
+    for i = 1, #capturedPieces do
+        local piece = capturedPieces[i]
+
+        board[piece.y][piece.x] = nil
+    end
+
+    capturedPieces = {}
 
     local capture = false
     local validMovesCount = 0
